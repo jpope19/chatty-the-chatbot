@@ -1,0 +1,22 @@
+{
+  "name": "chatty",
+  "version": "1.0.0",
+  "description": "chatbot for isso",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jpope19/chatty-the-chatbot.git"
+  },
+  "author": "Jeffrey Pope",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jpope19/chatty-the-chatbot/issues"
+  },
+  "homepage": "https://github.com/jpope19/chatty-the-chatbot#readme",
+  "dependencies": {
+    "@slack/client": "^3.9.0"
+  }
+}
