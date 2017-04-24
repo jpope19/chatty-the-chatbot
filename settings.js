@@ -1,1 +1,0 @@
-process.env['SLACK_BOT_TOKEN '] = 'xoxb-173767611490-1TCk147QV1NvWwwALRUexekM';
