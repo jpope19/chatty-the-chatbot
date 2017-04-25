@@ -1,9 +1,11 @@
-require('settings.js');
+require('./settings.js');
 
 var RtmClient = require('@slack/client').RtmClient;
 var CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
 
 var bot_token = process.env.SLACK_BOT_TOKEN || '';
+
+console.log(bot_token);
 
 var rtm = new RtmClient(bot_token);
 
