@@ -1,10 +1,11 @@
 /* jshint esversion:6 */
 require('./settings.js');
 
-var RtmClient = require('@slack/client').RtmClient;
-var CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
-var fs = require("fs");
-var request = require("request");
+var RtmClient = require('@slack/client').RtmClient,
+    CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS,
+    fs = require("fs"),
+    Stream = require("stream").Transform,
+    https = require("https");
 
 var bot_token = process.env.SLACK_BOT_TOKEN || '';
 var rtm = new RtmClient(bot_token);
@@ -12,13 +13,31 @@ var rtm = new RtmClient(bot_token);
 let channel;
 let bot_id;
 
-var download = function(uri, filename, callback){
-  request.head(uri, function(err, res, body){
-    console.log('content-type:', res.headers['content-type']);
-    console.log('content-length:', res.headers['content-length']);
+const fileDomain = "https://files.slack.com";
+var download = function(url, filename, callback){
+  var options = {
+    hostname: fileDomain,
+    path: url.replace(fileDomain, ""),
+    method: "GET"
+  };
 
-    request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
+  var req = https.request(url, function(response) {
+    var data = new Stream();
+    response.on("data", function(chunk) {
+      data.push(chunk);
+    });
+
+    response.on("end", function() {
+      fs.writeFileSync(`images/${filename}`, data.read());
+      callback();
+    });
   });
+
+  req.on('error', (e) => {
+    console.error(e);
+  });
+
+  req.end();
 };
 
 // The client will emit an RTM.AUTHENTICATED event on successful connection, with the `rtm.start` payload if you want to cache it
@@ -46,9 +65,9 @@ rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, (message) => {
   if(json.type === 'message' && json.user !== bot_id)
   {
     console.log(message);
-    if (!!json.file && !!json.file.url_private)
+    if (!!json.file && !!json.file.url_private_download)
     {
-      download(json.file.url_private, json.file.name, function(){
+      download(json.file.url_private_download, json.file.name, function(){
         rtm.sendMessage(`Downloaded file: ${json.file.name}`, json.channel);
       });
     }
