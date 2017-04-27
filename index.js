@@ -56,11 +56,26 @@ rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, (message) => {
     if (!!json.file && !!json.file.url_private)
     {
       rtm.sendMessage('Message received. Interpretting image...', json.channel);
+      rtm.sendTyping(json.channel);
+   
       download(json.file.url_private, json.file.name, () => {
         console.log('downloaded file');
         rtm.sendMessage(`Downloaded file: ${json.file.name}`, json.channel);
+        rtm.sendTyping(json.channel);
         exec(cmd(json.file.name), function(error, stdout, stderr) {
-          rtm.sendMessage('predictions.png created', json.channel);
+          request.post({
+            url: 'https://slack.com/api/files.upload',
+            formData: {
+              token: bot_token,
+              filename: json.file.name,
+              file: fs.createReadStream('predictions.png'),
+              filetype: 'png',
+              title: `Title: ${json.file.name}`,
+              channels: json.channel
+            }
+          }, function(err, response) {
+            console.log(`Response: ${response.statusCode} ${response.statusMessage}`);
+          });
         });
       });
     }
