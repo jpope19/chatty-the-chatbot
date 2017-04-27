@@ -4,7 +4,8 @@ require('./settings.js');
 var RtmClient = require('@slack/client').RtmClient,
     CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS,
     fs = require('fs'),
-    request = require('request');
+    request = require('request'),
+    exec = require('child_process').exec;
 
 var bot_token = process.env.SLACK_BOT_TOKEN || '';
 var access_token = process.env.ACCESS_TOKEN || '';
@@ -12,6 +13,10 @@ var rtm = new RtmClient(bot_token);
 
 let channel;
 let bot_id;
+
+var cmd_tiny = (filename) => {
+  return './darknet detector test cfg/voc.data cfg/tiny-yolo-voc.cfg weights/tiny-yolo-voc.weights images/${filename}';
+};
 
 var download = (url, filename, callback) => {
   request({
@@ -48,10 +53,13 @@ rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, (message) => {
   {
     if (!!json.file && !!json.file.url_private)
     {
-      rtm.sendMessage('Message received. Interpretting image.', json.channel);
+      rtm.sendMessage('Message received. Interpretting image...', json.channel);
       download(json.file.url_private, json.file.name, () => {
         console.log('downloaded file');
         rtm.sendMessage(`Downloaded file: ${json.file.name}`, json.channel);
+        exec(cmd_tiny(json.file.name), function(error, stdout, stderr) {
+          rtm.sendMessage('predictions.png created', json.channel);
+        });
       });
     }
     else
