@@ -3,8 +3,8 @@ require('./settings.js');
 
 var RtmClient = require('@slack/client').RtmClient,
     CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS,
-    fs = require("fs"),
-    request = require("request");
+    fs = require('fs'),
+    request = require('request');
 
 var bot_token = process.env.SLACK_BOT_TOKEN || '';
 var access_token = process.env.ACCESS_TOKEN || '';
@@ -13,13 +13,13 @@ var rtm = new RtmClient(bot_token);
 let channel;
 let bot_id;
 
-var download = function(url, filename, callback){
+var download = (url, filename, callback) => {
   request({
     url: url,
     headers: {
       'Authorization': `Bearer ${bot_token}`
     }
-  }, callback).pipe(fs.createWriteStream(`./images/${filename}`));
+  }).pipe(fs.createWriteStream(`./images/${filename}`)).on('finish', callback);
 };
 
 // The client will emit an RTM.AUTHENTICATED event on successful connection, with the `rtm.start` payload if you want to cache it
@@ -38,7 +38,7 @@ rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
 });
 
 rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, () =>  {
-  console.log("RTM Connection Opened.");
+  console.log('RTM Connection Opened.');
 });
 
 rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, (message) => {
@@ -48,8 +48,9 @@ rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, (message) => {
   {
     if (!!json.file && !!json.file.url_private)
     {
-      download(json.file.url_private, json.file.name, function(){
-        console.log("downloaded file");
+      rtm.sendMessage('Message received. Interpretting image.', json.channel);
+      download(json.file.url_private, json.file.name, () => {
+        console.log('downloaded file');
         rtm.sendMessage(`Downloaded file: ${json.file.name}`, json.channel);
       });
     }
