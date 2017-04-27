@@ -14,17 +14,19 @@ var rtm = new RtmClient(bot_token);
 let channel;
 let bot_id;
 
-var cmd_tiny = (filename) => {
-  return './darknet detector test cfg/voc.data cfg/tiny-yolo-voc.cfg weights/tiny-yolo-voc.weights images/${filename}';
+var cmd = (filename) => {
+  return `./darknet detect cfg/yolo.cfg weights/yolo.weights images/${filename}`;
 };
 
 var download = (url, filename, callback) => {
-  request({
+  var req = request({
     url: url,
     headers: {
       'Authorization': `Bearer ${bot_token}`
     }
-  }).pipe(fs.createWriteStream(`./images/${filename}`)).on('finish', callback);
+  }).pipe(fs.createWriteStream(`./images/${filename}`));
+  
+  req.on('close', callback);
 };
 
 // The client will emit an RTM.AUTHENTICATED event on successful connection, with the `rtm.start` payload if you want to cache it
@@ -57,7 +59,7 @@ rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, (message) => {
       download(json.file.url_private, json.file.name, () => {
         console.log('downloaded file');
         rtm.sendMessage(`Downloaded file: ${json.file.name}`, json.channel);
-        exec(cmd_tiny(json.file.name), function(error, stdout, stderr) {
+        exec(cmd(json.file.name), function(error, stdout, stderr) {
           rtm.sendMessage('predictions.png created', json.channel);
         });
       });
