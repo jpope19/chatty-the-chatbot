@@ -14,11 +14,18 @@ var rtm = new RtmClient(bot_token);
 let channel;
 let bot_id;
 
+// channel ids for ims for each user between bot/user
+var bot_ims_channels = {};
+
+// command to run to initialize object detection
 var cmd = (filename) => {
   return `./darknet detect cfg/yolo.cfg weights/yolo.weights images/${filename}`;
 };
 
 var download = (url, filename, callback) => {
+  // slack saves the image locally and makes us make an additional https request to get access to it.
+  // 302 redirect response caused if authorization isn't correct.
+  // saves image to the images folder
   var req = request({
     url: url,
     headers: {
@@ -32,8 +39,16 @@ var download = (url, filename, callback) => {
 // The client will emit an RTM.AUTHENTICATED event on successful connection, with the `rtm.start` payload if you want to cache it
 rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
   bot_id = rtmStartData.self.id;
+
+  for (const ims of rtmStartData.ims)
+  {
+    bot_ims_channels[ims.user] = ims.id;
+  }
+
   for (const g of rtmStartData.groups)
   {
+    // default channel -- testing out how to send a message.
+    // doesn't do anything, but could be utilized to send a message on startup.
     if (g.name === 'chatty-test')
     {
       channel = g.id;
@@ -53,35 +68,49 @@ rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, (message) => {
 
   if(json.type === 'message' && json.user !== bot_id)
   {
-    if (!!json.file && !!json.file.url_private)
+    // only respond if spoken to directly or in the channel specified at startup
+    // if it was in a public channel -- see if chatty was mentioned
+    var mentioned = false;
+    if (!!json.text && json.text.indexOf(`@${bot_id}`) > -1)
+      mentioned = true;
+
+    if (mentioned || bot_ims_channels[json.user] === json.channel || channel === json.channel)
     {
-      rtm.sendMessage('Message received. Interpretting image...', json.channel);
-      rtm.sendTyping(json.channel);
-   
-      download(json.file.url_private, json.file.name, () => {
-        console.log('downloaded file');
-        rtm.sendMessage(`Downloaded file: ${json.file.name}`, json.channel);
+      if (json.subtype === 'file_share' && !!json.file && !!json.file.url_private)
+      {
+        rtm.sendMessage('Message received. Interpretting image...', json.channel);
         rtm.sendTyping(json.channel);
-        exec(cmd(json.file.name), function(error, stdout, stderr) {
-          request.post({
-            url: 'https://slack.com/api/files.upload',
-            formData: {
-              token: bot_token,
-              filename: json.file.name,
-              file: fs.createReadStream('predictions.png'),
-              filetype: 'png',
-              title: `Title: ${json.file.name}`,
-              channels: json.channel
-            }
-          }, function(err, response) {
-            console.log(`Response: ${response.statusCode} ${response.statusMessage}`);
+
+        // download saves the file as predictions.png -- need to update the darknet runnable to change that...   
+        download(json.file.url_private, json.file.name, () => {
+          console.log('downloaded file');
+          rtm.sendMessage(`Downloaded file: ${json.file.name}`, json.channel);
+          rtm.sendTyping(json.channel);
+
+          // run the yolo command -- this can be swapped out with any  object detection algorithm of choice
+          exec(cmd(json.file.name), function(error, stdout, stderr) {
+            // post the new picture to the slack channel -- remember, darknet saves the image as predictions.png
+            request.post({
+              url: 'https://slack.com/api/files.upload',
+              formData: {
+                token: bot_token,
+                filename: json.file.name,
+                file: fs.createReadStream('predictions.png'),
+                filetype: 'png',
+                title: `Title: ${json.file.name}`,
+                channels: json.channel
+              }
+            }, function(err, response) {
+              console.log(`Response: ${response.statusCode} ${response.statusMessage}`);
+            });
           });
         });
-      });
-    }
-    else
-    {
-      rtm.sendMessage('Message received!', json.channel);
+      }
+      // TODO - add text analytics
+      else
+      {
+        rtm.sendMessage('Message received!', json.channel);
+      }
     }
   }
 });
