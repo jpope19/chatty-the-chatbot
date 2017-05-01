@@ -1,10 +1,11 @@
 /* jshint esversion:6 */
-require('./ChattyProcess.js');
-
+var ChattyProcess = require('./ChattyProcess').ChattyProcess;
 var exec = require('child_process').exec;
 
 class Darknet extends ChattyProcess {
-  constructor() {}
+  constructor() {
+    super();
+  }
 
   static cmd (filename) {
     return `./darknet detect cfg/yolo.cfg weights/yolo.weights images/${filename}`;
@@ -18,3 +19,5 @@ class Darknet extends ChattyProcess {
     });
   }
 }
+
+module.exports.Darknet = Darknet;

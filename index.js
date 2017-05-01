@@ -1,6 +1,8 @@
 /* jshint esversion:6 */
 require('./settings.js');
-require('./Darknet.js');
+var Darknet = require('./Darknet.js').Darknet;
+
+console.log(Darknet);
 
 var RtmClient = require('@slack/client').RtmClient,
     CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS,
