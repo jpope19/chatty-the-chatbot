@@ -1,11 +1,11 @@
 /* jshint esversion:6 */
 require('./settings.js');
+require('./Darknet.js');
 
 var RtmClient = require('@slack/client').RtmClient,
     CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS,
     fs = require('fs'),
-    request = require('request'),
-    exec = require('child_process').exec;
+    request = require('request');
 
 var bot_token = process.env.SLACK_BOT_TOKEN || '';
 var access_token = process.env.ACCESS_TOKEN || '';
@@ -17,10 +17,7 @@ let bot_id;
 // channel ids for ims for each user between bot/user
 var bot_ims_channels = {};
 
-// command to run to initialize object detection
-var cmd = (filename) => {
-  return `./darknet detect cfg/yolo.cfg weights/yolo.weights images/${filename}`;
-};
+var image_process = new Darknet();
 
 var download = (url, filename, callback) => {
   // slack saves the image locally and makes us make an additional https request to get access to it.
@@ -87,15 +84,14 @@ rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, (message) => {
           rtm.sendMessage(`Downloaded file: ${json.file.name}`, json.channel);
           rtm.sendTyping(json.channel);
 
-          // run the yolo command -- this can be swapped out with any  object detection algorithm of choice
-          exec(cmd(json.file.name), function(error, stdout, stderr) {
+          image_process.run(json.file.name, (resultFileName) => {
             // post the new picture to the slack channel -- remember, darknet saves the image as predictions.png
             request.post({
               url: 'https://slack.com/api/files.upload',
               formData: {
                 token: bot_token,
                 filename: json.file.name,
-                file: fs.createReadStream('predictions.png'),
+                file: fs.createReadStream(resultFileName),
                 filetype: 'png',
                 title: `Title: ${json.file.name}`,
                 channels: json.channel
