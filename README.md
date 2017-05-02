@@ -24,3 +24,5 @@ Access information about your team.
 
 ##### USERS
 View email addresses of people on this team.
+
+5. Add AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY to settings.js
