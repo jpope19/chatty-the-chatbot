@@ -18,7 +18,9 @@
   "homepage": "https://github.com/jpope19/chatty-the-chatbot#readme",
   "dependencies": {
     "@slack/client": "^3.9.0",
+    "aws-sdk": "^2.48.0",
     "fs": "0.0.1-security",
+    "node-uuid": "^1.4.8",
     "request": "^2.81.0"
   }
 }
