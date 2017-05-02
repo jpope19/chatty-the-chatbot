@@ -1,9 +1,8 @@
 /* jshint esversion:6 */
 
 var ChattyProcess = require('./ChattyProcess').ChattyProcess;
-var LexRuntime = require('aws-sdk/clients/lexruntime');
-
-var lexruntime = new LexRuntime();
+var LexRuntime  = require('aws-sdk/clients/lexruntime');
+var lexruntime = new LexRuntime({endpoint: 'https://runtime.lex.us-east-1.amazonaws.com', region: 'us-east-1'});
 
 class Lex extends ChattyProcess {
   constructor() {

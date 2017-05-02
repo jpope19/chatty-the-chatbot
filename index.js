@@ -111,9 +111,7 @@ rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, (message) => {
       {
         info.text = json.text;
         text_process.run(info, (response) => {
-          console.log("it worked!");
-          console.log(response);
-          //rtm.sendMessage('Message received!', json.channel);
+          rtm.sendMessage(response.message, json.channel);
         });
       }
     }
