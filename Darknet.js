@@ -11,9 +11,9 @@ class Darknet extends ChattyProcess {
     return `./darknet detect cfg/yolo.cfg weights/yolo.weights images/${filename}`;
   }
 
-  run (filename, callback) {
+  run (info, callback) {
     // run the yolo command -- this can be swapped out with any  object detection algorithm of choice
-    exec(Darknet.cmd(filename), function(error, stdout, stderr) {
+    exec(Darknet.cmd(info.file_name), function(error, stdout, stderr) {
       // post the new picture to the slack channel -- remember, darknet saves the image as predictions.png
       callback('predictions.png');
     });

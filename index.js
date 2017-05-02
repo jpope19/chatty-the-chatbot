@@ -19,6 +19,7 @@ let bot_id;
 var bot_ims_channels = {};
 
 var image_process = new Darknet();
+var text_process = new Lex();
 
 var download = (url, filename, callback) => {
   // slack saves the image locally and makes us make an additional https request to get access to it.
@@ -74,6 +75,7 @@ rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, (message) => {
 
     if (mentioned || bot_ims_channels[json.user] === json.channel || channel === json.channel)
     {
+      var info = {userId: json.user};
       if (json.subtype === 'file_share' && !!json.file && !!json.file.url_private)
       {
         rtm.sendMessage('Message received. Interpretting image...', json.channel);
@@ -85,7 +87,8 @@ rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, (message) => {
           rtm.sendMessage(`Downloaded file: ${json.file.name}`, json.channel);
           rtm.sendTyping(json.channel);
 
-          image_process.run(json.file.name, (resultFileName) => {
+          info.file_name = json.file.name;
+          image_process.run(info, (resultFileName) => {
             // post the new picture to the slack channel -- remember, darknet saves the image as predictions.png
             request.post({
               url: 'https://slack.com/api/files.upload',
@@ -106,7 +109,12 @@ rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, (message) => {
       // TODO - add text analytics
       else
       {
-        rtm.sendMessage('Message received!', json.channel);
+        info.text = json.text;
+        text_process.run(info, (response) => {
+          console.log("it worked!");
+          console.log(response);
+          //rtm.sendMessage('Message received!', json.channel);
+        });
       }
     }
   }

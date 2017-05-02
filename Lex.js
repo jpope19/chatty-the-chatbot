@@ -3,7 +3,7 @@
 var ChattyProcess = require('./ChattyProcess').ChattyProcess;
 var LexRuntime = require('aws-sdk/clients/lexruntime');
 
-console.log(LexRuntime);
+var lexruntime = new LexRuntime();
 
 class Lex extends ChattyProcess {
   constructor() {
@@ -13,11 +13,17 @@ class Lex extends ChattyProcess {
   run (info, callback) {
     const text = info.text;
     const userId = info.userId;
-    const url = `https://runtime.lex.us-east-1.amazonaws.com/bot/Chatty/alias/Prod/user/${userId}/text`;
+    const params = {
+      botAlias: 'Prod',
+      botName: 'Chatty',
+      inputText: text,
+      userId: userId
+    };
 
-/*    request.post(url)
-      .on('response', (response) => {})
-      .on('error', (error) => {});*/
+    lexruntime.postText(params, (err,data) => {
+      if (err) console.error(err);
+      else callback(data);
+    });
   }
 }
 
