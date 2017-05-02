@@ -4,7 +4,7 @@ Steps to get working:
 1. npm install
 2. Update settings.js with your app's tokens
 3. Update weights folder with yolo.weights found: http://pjreddie.com/media/files/yolo.weights
-4. Add following permissions:
+4. Add following permissions in slack:
 
 ## Slack-bot permissions
 #### OTHER
@@ -25,4 +25,4 @@ Access information about your team.
 ##### USERS
 View email addresses of people on this team.
 
-5. Add AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY to settings.js
+5. Add **AWS_ACCESS_KEY_ID** & **AWS_SECRET_ACCESS_KEY** to settings.js
